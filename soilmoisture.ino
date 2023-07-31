@@ -1,63 +1,40 @@
+// Include the required libraries
+#include <SPI.h>
 #include <SD.h>
-#include <Wire.h>
 
-const int soilMoisturePin = A0;  // Analog pin for soil moisture sensor
-
-// Set the name of the file where the data will be logged
-const char* logFileName = "soil_moisture_log.csv";
+// Define pins for the data logger
+const int chipSelect = 10;
 
 void setup() {
-  // Initialize serial communication
+  // Initialize serial communication for debugging
   Serial.begin(9600);
   
-  // Initialize the data logger shield
-  if (!SD.begin(10)) {
-    Serial.println("SD Card initialization failed!");
-    while (1);  // Stop here if SD card initialization fails
+  // Initialize the SD card and check for errors
+  if (!SD.begin(chipSelect)) {
+    Serial.println("Error initializing SD card.");
+    while (1);
   }
 
-  // Open the log file in append mode
-  File dataFile = SD.open(logFileName, FILE_WRITE);
-  if (dataFile) {
-    // If the file opened successfully, write the header
-    dataFile.println("Timestamp,Soil Moisture");
-    dataFile.close();
-    Serial.println("Data logger initialized!");
-  } else {
-    // If the file failed to open, print an error message
-    Serial.println("Error opening log file!");
-  }
+  Serial.println("SD card initialized.");
 }
 
 void loop() {
-  // Read the soil moisture value from the sensor
-  int soilMoistureValue = analogRead(soilMoisturePin);
+  // Read the soil moisture sensor value
+  int soilMoisture = analogRead(A0);
 
-  // Get the current timestamp
-  unsigned long currentTime = millis();
-
-  // Print the soil moisture value and timestamp to the serial monitor
+  // Print the moisture value to the Serial Monitor
   Serial.print("Soil Moisture: ");
-  Serial.println(soilMoistureValue);
-  
-  // Log the data to the SD card
-  logData(currentTime, soilMoistureValue);
+  Serial.println(soilMoisture);
 
-  // Delay for a while before taking the next reading
-  delay(5000); // Change this value to set the reading interval (in milliseconds)
-}
+  // Create a file to log data on the SD card
+  File dataFile = SD.open("moistureData.txt", FILE_WRITE);
 
-// Function to log data to the SD card
-void logData(unsigned long timestamp, int soilMoistureValue) {
-  File dataFile = SD.open(logFileName, FILE_WRITE);
+  // Write the moisture value to the SD card
   if (dataFile) {
-    // Print the data to the file in CSV format (comma-separated values)
-    dataFile.print(timestamp);
-    dataFile.print(",");
-    dataFile.println(soilMoistureValue);
+    dataFile.println(soilMoisture);
     dataFile.close();
   } else {
-    // If the file failed to open, print an error message
-    Serial.println("Error opening log file!");
+    Serial.println("Error opening data file.");
   }
+
 }
